@@ -1,4 +1,6 @@
 #include "Server.h"
+#include "HttpReq.h"
+#include "HttpRes.h"
 #include <iostream>
 
 Server::Server(in_port_t port) {
@@ -7,6 +9,7 @@ Server::Server(in_port_t port) {
 }
 
 void Server::run() {
+    /*可以利用 fork 设置多进程监听*/
     struct epoll_event events[EPOLL_EVENT_NUM];
 
     event_register(server_sockfd, EPOLLIN);
@@ -75,13 +78,14 @@ void Server::get_resquest(int client_fd) {
 }
 
 void Server::handle_request(int client_fd, const char *http_request) {
-    char msg[] =  "HTTP/1.0 200 OK <\r\n\r\n<html><h1>Hello, client!</h1></html>\r\n";
-    send(client_fd, msg, sizeof(msg), 0);
+    HttpReq req(http_request);
+    std::string method = req.get_method();
+    std::string api = req.get_api();
+
+    HttpRes res;
+    std::string res_text = res.exec(api, method);
+    send(client_fd, res_text.c_str(), res_text.size(), 0);
     close(client_fd);
-}
-
-void Server::analysis_request(const char *http_request) {
-
 }
 
 /*Utils*/

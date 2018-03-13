@@ -28,7 +28,6 @@ private:
     void accept_client();
     void get_resquest(int client_fd);
 
-    static void analysis_request(const char *http_request);
     static void handle_request(int client_fd, const char *http_request);
 public:
     Server(in_port_t port);
