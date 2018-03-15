@@ -113,10 +113,10 @@ void Server::get_resquest(int client_fd) {
 void Server::handle_request(int client_fd, const char *http_request) {
     HttpReq req(http_request);
     std::string method = req.get_method();
-    std::string api = req.get_api();
+    std::string path = req.get_path();
 
     HttpRes res;
-    std::string res_text = res.exec(api, method);
+    std::string res_text = res.exec(path, method);
     send(client_fd, res_text.c_str(), res_text.size(), 0);
     close(client_fd);
 }
