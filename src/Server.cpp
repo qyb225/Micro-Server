@@ -2,6 +2,7 @@
 #include "HttpReq.h"
 #include "HttpRes.h"
 #include <iostream>
+#include <sys/wait.h>
 
 Server::Server(in_port_t port) {
     server_sockfd = init_socket(port);
@@ -9,15 +10,48 @@ Server::Server(in_port_t port) {
 }
 
 void Server::run() {
-    /*可以利用 fork 设置多进程监听*/
     struct epoll_event events[EPOLL_EVENT_NUM];
 
+    pid_t master_pid = create_workers(WORKER_NUM);
     event_register(server_sockfd, EPOLLIN);
 
+    if (getpid() == master_pid) {
+        /*Master process*/
+        while (1) {
+            wait(NULL);
+            std::cerr << "A worker exit!" << std::endl;
+            pid_t pid = fork();
+            if (pid == 0) {
+                worker_run(events);
+            } else if (pid < 0) {
+                std::cerr << "Fork error!" << std::endl;
+            }
+            std::cout << "Worker restart!" << std::endl;
+        }
+    } else {
+        worker_run(events);
+    }
+}
+
+void Server::worker_run(struct epoll_event *events) {
     while (1) {
         int events_num = epoll_wait(epollfd, events, EPOLL_EVENT_NUM, -1);
         handle_events(events, events_num);
     }
+}
+
+pid_t Server::create_workers(int worker_num) {
+    pid_t pid = getpid();
+    for (int i = 0; i < worker_num; ++i) {
+        pid_t child_pid = fork();
+        if (child_pid < 0) {
+            std::cerr << "Fork error" << std::endl;
+        } else if (child_pid == 0) {
+            return 0;
+        }
+    }
+
+    return pid;
 }
 
 Server::~Server() {
@@ -45,9 +79,9 @@ void Server::accept_client() {
 
     cli_sockfd = accept(server_sockfd, (struct sockaddr *)&cli_addr, &cli_addr_len);
     if (cli_sockfd != -1) {
-        std::cout << "New client accepted: " 
+        std::cout << getpid() << ": New client accepted: " 
                   << inet_ntoa(cli_addr.sin_addr)
-                  << std::endl;
+                  << std::endl << std::endl;
         event_register(cli_sockfd, EPOLLIN);
     }
 }
@@ -72,7 +106,6 @@ void Server::get_resquest(int client_fd) {
     char http_request_buffer[HTTP_BUF_SIZE];
     int resquest_len = recv(client_fd, http_request_buffer, HTTP_BUF_SIZE, 0);
     if (resquest_len > 0) {
-        printf("%s\n", http_request_buffer);
         handle_request(client_fd, http_request_buffer);
     }
 }

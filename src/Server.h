@@ -15,6 +15,7 @@
 #define EPOLL_EVENT_NUM 100
 #define FD_NUM 1000
 #define BUF_SIZE 4096
+#define WORKER_NUM 4
 
 class Server {
 private:
@@ -22,8 +23,10 @@ private:
     int epollfd;
     char buffer[BUF_SIZE];
 
+    pid_t create_workers(int worker_num);
     void event_register(int fd, int state);
     void event_cancel(int fd, int state);
+    void worker_run(struct epoll_event *events);
     void handle_events(struct epoll_event *events, int events_num);
     void accept_client();
     void get_resquest(int client_fd);
