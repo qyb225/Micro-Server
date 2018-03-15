@@ -111,13 +111,15 @@ void Server::get_resquest(int client_fd) {
 }
 
 void Server::handle_request(int client_fd, const char *http_request) {
-    HttpReq req(http_request);
-    std::string method = req.get_method();
-    std::string path = req.get_path();
+    char buffer[1024];
+    int buf_len = 0;
 
-    HttpRes res;
-    std::string res_text = res.exec(path, method);
-    send(client_fd, res_text.c_str(), res_text.size(), 0);
+    HttpReq req(http_request);
+    HttpRes res(req);
+
+    res.res_to_buffer(buffer, &buf_len);
+
+    send(client_fd, buffer, buf_len, 0);
     close(client_fd);
 }
 
