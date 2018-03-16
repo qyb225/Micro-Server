@@ -15,7 +15,7 @@
 #define EPOLL_EVENT_NUM 100
 #define FD_NUM 1000
 #define BUF_SIZE 4096
-#define WORKER_NUM 4
+#define WORKER_NUM 1
 
 class Server {
 private:

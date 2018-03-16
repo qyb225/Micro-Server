@@ -79,9 +79,11 @@ void Server::accept_client() {
 
     cli_sockfd = accept(server_sockfd, (struct sockaddr *)&cli_addr, &cli_addr_len);
     if (cli_sockfd != -1) {
+        /*
         std::cout << getpid() << ": New client accepted: " 
                   << inet_ntoa(cli_addr.sin_addr)
                   << std::endl << std::endl;
+        */
         event_register(cli_sockfd, EPOLLIN);
     }
 }
